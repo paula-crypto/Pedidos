@@ -1,4 +1,3 @@
-
 <template>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <header>
@@ -866,5 +865,60 @@ header button:hover {
   font-size: 1.3em;
   color: #27ae60;
   font-weight: bold;
+}
+
+/* Responsive móvil: 650px hacia abajo */
+@media (max-width: 650px) {
+  header {
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px 12px;
+    justify-content: center;
+    align-items: center;
+  }
+
+  header img {
+    height: 52px;
+    width: auto;
+  }
+
+  /* Asegura centrado real incluso si otros estilos del header ponen width/margin raros */
+  header .header-actions {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+
+    gap: 10px;
+  }
+
+  header .btn-add,
+  header button {
+    /* Evita que el layout del menú quede muy “largo” por cada tarjeta */
+    width: 46px;
+    height: 42px;
+    font-size: 18px;
+    padding: 0;
+    margin: 0;
+  }
+  #menu {
+    padding: 28px 12px;
+    gap: 14px;
+  }
+
+  .products {
+    width: min(250px, 100%);
+  }
+
+  /* Modal carrito: que no quede cortado en pantallas chicas */
+  .ventana-modal {
+    top: 10%;
+    min-width: 0;
+    max-height: 85vh;
+    padding: 14px;
+  }
+
+  .ventana-modal h2 {
+    font-size: 1.4em;
+  }
 }
 </style>
