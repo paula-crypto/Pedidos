@@ -29,8 +29,12 @@
     <input v-model="nuevoNombre" type="text" placeholder="Nombre del producto" required />
     <input v-model="nuevaImagen" type="url" placeholder="URL de la imagen" required />
     <input v-model="nuevaDescripcion" type="text" placeholder="Descripción" required />
+ <label for="nuevoPrecio">Precio
     <input v-model.number="nuevoPrecio" type="number" min="0" step="0.01" placeholder="Precio" required />
+    </label>
+        <label for="nuevoPrecio">Cantidades     
     <input v-model.number="nuevasUnidades" type="number" min="1" step="1" placeholder="Unidades" required />
+    </label>
     <button type="submit">Agregar al menú</button>
   </form>
 </div>
