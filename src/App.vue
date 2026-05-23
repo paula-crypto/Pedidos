@@ -2,6 +2,16 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <header>
   <img src="./img/logo-fast-food-burger-cartoon-vector-removebg-preview.png" alt="logo">
+  <div class="header-search">
+    <input
+      v-model="busqueda"
+      type="text"
+      placeholder="Buscar por nombre..."
+      class="search-input"
+      aria-label="Buscar por nombre"
+    />
+  </div>
+
   <div class="header-actions">
     <button type="button" class="btn-add" @click="toggleFormProducto" title="Agregar producto al menú"><i class="fas fa-plus"></i></button>
     <button @click="toggleModal()"><i class="fas fa-shopping-cart"></i></button>
@@ -60,7 +70,8 @@
 </div>
 
 <div id="menu">
-    <div v-for="plato in menu" :class="['products', { agotado: plato.unidades === 0 }]">
+    <div v-for="plato in menuFiltrado" :class="['products', { agotado: plato.unidades === 0 }]">
+
       <img :src="plato.imagen" :alt="plato.nombre">
       <h1>{{ plato.nombre }}</h1>
       <p>{{ plato.descripcion }}</p>
@@ -74,6 +85,7 @@
 <script setup>
 import { computed, ref } from 'vue';
 import { jsPDF } from 'jspdf';
+const busqueda = ref('');
 const mostrarModal = ref(false);
 const mostrarFormProducto = ref(false);
 const procesando = ref(false);
@@ -90,6 +102,12 @@ function cargarUnidades() {
 }
 
 const unidadesGuardadas = cargarUnidades();
+
+const menuFiltrado = computed(() => {
+  const q = busqueda.value.trim().toLowerCase();
+  if (!q) return menu.value;
+  return menu.value.filter(plato => plato.nombre.toLowerCase().includes(q));
+});
 
 const menu = ref([
   { id: 1, nombre: "Hamburguesa", imagen: "https://png.pngtree.com/png-vector/20250429/ourmid/pngtree-burger-image-with-white-background-png-image_16049638.png", descripcion: "Carne de res, cebolla salteada, lechuga, tomate y papas", precio: 12.50, unidades: unidadesGuardadas?.[0] ?? 15 },
@@ -622,6 +640,27 @@ function exportToPDF() {
   header img {
     height: 60px;
     width: auto;
+  }
+
+  .header-search {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    padding: 0 20px;
+  }
+
+  .search-input {
+    width: min(420px, 100%);
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid #333;
+    outline: none;
+    font-size: 1em;
+  }
+
+  .search-input:focus {
+    border-color: #ffd700;
+    box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.25);
   }
 
   #menu {
