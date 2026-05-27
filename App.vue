@@ -56,15 +56,15 @@
   </div>
 
   <form @submit.prevent="agregarProductoAlMenu">
-    <input v-model="nuevoNombre" type="text" placeholder="Nombre del producto"  />
-    <input v-model="nuevaImagen" type="url" placeholder="URL de la imagen"  />
-    <input v-model="nuevaDescripcion" type="text" placeholder="Descripción"  />
+    <input v-model="nuevoNombre" type="text" placeholder="Nombre del producto" required />
+    <input v-model="nuevaImagen" type="url" placeholder="URL de la imagen" required />
+    <input v-model="nuevaDescripcion" type="text" placeholder="Descripción" required />
     <label for="nuevoPrecio">Precio
-    <input v-model.number="nuevoPrecio" type="number" min="0" step="0.01" placeholder="Precio"  />
+    <input v-model.number="nuevoPrecio" type="number" min="0" step="0.01" placeholder="Precio" required />
     </label>
         <label for="nuevoPrecio">Cantidades
         
-    <input v-model.number="nuevasUnidades" type="number" min="1" step="1" placeholder="Unidades"  />
+    <input v-model.number="nuevasUnidades" type="number" min="1" step="1" placeholder="Unidades" required />
     </label>
     <button type="submit">Agregar al menú</button>
   </form>
@@ -148,8 +148,6 @@
 <script setup>
 import { computed, ref } from 'vue';
 import { jsPDF } from 'jspdf';
-import Swal from 'sweetalert2';
-import 'sweetalert2/dist/sweetalert2.min.css';
 const busqueda = ref('');
 const mostrarModal = ref(false);
 const mostrarFormProducto = ref(false);
@@ -286,12 +284,7 @@ function agregarProductoAlMenu() {
 
 
   if (!nombre || !imagen || !descripcion || isNaN(precio) || precio <= 0 || isNaN(unidades) || unidades <= 0) {
-    Swal.fire({
-      icon: 'error',
-      title: 'Datos incompletos',
-      text: 'Ingresa todos los datos del producto correctamente.',
-      confirmButtonText: 'Entendido'
-    });
+    alert('Ingresa todos los datos del producto correctamente.');
     return;
   }
 
@@ -316,18 +309,6 @@ function agregarProductoAlMenu() {
 
 
 
-  // Mensaje de éxito al agregar el producto al menú
-  Swal.fire({
-    position: 'center',
-    icon: 'success',
-    title: 'Producto agregado',
-    html: `<div style="font-size:16px">✅ <b>${nombre}</b> se agregó exitosamente al menú.</div>`,
-    confirmButtonText: 'OK',
-    showConfirmButton: true,
-    allowOutsideClick: false,
-    backdrop: true
-  });
-
   nuevoNombre.value = '';
   nuevaImagen.value = '';
   nuevaDescripcion.value = '';
@@ -347,12 +328,7 @@ function guardarCarrito() {
 
 function agregarAlCarrito(plato) {
   if (plato.unidades == 0) {
-    Swal.fire({
-      icon: 'warning',
-      title: 'Agotado',
-      text: 'No hay unidades disponibles',
-      confirmButtonText: 'Entendido'
-    });
+    alert('No hay unidades disponibles');
     return;
   }
 
@@ -375,8 +351,6 @@ function agregarAlCarrito(plato) {
 
   // (Solo badge encima del botón del carrito)
   syncBadgeVisibility();
-
-
 }
 
 function guardarUnidades() {
@@ -460,18 +434,17 @@ function exportToPDF() {
 
       // Restaurant name and info (left side)
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(18);
+      doc.setFontSize(16);
       doc.setTextColor(...primaryColor);
       doc.text('FAST FOOD BURGER', logoX, headerY + 6);
 
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(10);
+      doc.setFontSize(9);
       doc.setTextColor(...mediumGray);
-      doc.text('Restaurante de Comida Rápida', logoX, headerY + 14);
-      doc.text('NIT: 900.123.456-7', logoX, headerY + 20);
-      doc.text('Calle 123 # 45-67, Ciudad', logoX, headerY + 26);
-      doc.text('Tel: (123) 456-7890', logoX, headerY + 32);
-
+      doc.text('Restaurante de Comida Rápida', logoX, headerY + 13);
+      doc.text('NIT: 900.123.456-7', logoX, headerY + 19);
+      doc.text('Calle 123 # 45-67, Ciudad', logoX, headerY + 25);
+      doc.text('Tel: (123) 456-7890', logoX, headerY + 31);
 
       // Factura info box (right side)
       const boxW = 75;
@@ -485,26 +458,25 @@ function exportToPDF() {
       doc.rect(boxX, boxY, boxW, boxH);
 
       let by = boxY + 8;
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(13);
-    doc.setTextColor(...primaryColor);
-    doc.text('FACTURA DE VENTA', boxX + boxW / 2, by, { align: 'center' });
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(...primaryColor);
+      doc.text('FACTURA DE VENTA', boxX + boxW / 2, by, { align: 'center' });
 
-    by += 7;
-    doc.setDrawColor(...borderGray);
-    doc.setLineWidth(0.3);
-    doc.line(boxX + 5, by, boxX + boxW - 5, by);
+      by += 7;
+      doc.setDrawColor(...borderGray);
+      doc.setLineWidth(0.3);
+      doc.line(boxX + 5, by, boxX + boxW - 5, by);
 
-    by += 7;
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
-    doc.setTextColor(...darkText);
-    doc.text(`No.  ${facturaNum}`, boxX + 6, by);
-    by += 6;
-    doc.text(`Fecha:  ${fecha.toLocaleDateString('es-ES')}`, boxX + 6, by);
-    by += 6;
-    doc.text(`Hora:  ${fecha.toLocaleTimeString('es-ES')}`, boxX + 6, by);
-
+      by += 7;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(...darkText);
+      doc.text(`No.  ${facturaNum}`, boxX + 6, by);
+      by += 6;
+      doc.text(`Fecha:  ${fecha.toLocaleDateString('es-ES')}`, boxX + 6, by);
+      by += 6;
+      doc.text(`Hora:  ${fecha.toLocaleTimeString('es-ES')}`, boxX + 6, by);
 
       // Horizontal separator line
       return headerY + 42;
@@ -518,12 +490,11 @@ function exportToPDF() {
       doc.line(margin, footerY, rightX, footerY);
 
       doc.setFont('helvetica', 'italic');
-      doc.setFontSize(10);
+      doc.setFontSize(8);
       doc.setTextColor(...mediumGray);
       doc.text('Gracias por su compra. Vuelva pronto.', margin, footerY + 5);
-      doc.text('Este documento es un comprobante de pago válido.', margin, footerY + 11);
+      doc.text('Este documento es un comprobante de pago válido.', margin, footerY + 10);
       doc.text(`Página ${currentPage}`, rightX, footerY + 5, { align: 'right' });
-
     }
 
     let y = drawHeader();
@@ -537,7 +508,7 @@ function exportToPDF() {
     // CLIENTE section
     y += 12;
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(12);
+    doc.setFontSize(10);
     doc.setTextColor(...primaryColor);
     doc.text('DATOS DEL CLIENTE', margin, y);
 
@@ -548,16 +519,15 @@ function exportToPDF() {
 
     y += 8;
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(11);
+    doc.setFontSize(9);
     doc.setTextColor(...darkText);
     doc.text('Nombre:     Consumidor Final', margin, y);
-    y += 7;
+    y += 6;
     doc.text('Identificación:     222222222222', margin, y);
-    y += 7;
+    y += 6;
     doc.text('Dirección:     Ciudad', margin, y);
-    y += 7;
+    y += 6;
     doc.text('Teléfono:     N/A', margin, y);
-
 
     // Separator before table
     y += 10;
@@ -590,21 +560,19 @@ function exportToPDF() {
     doc.line(col4X, y - 5, col4X, y + 3);
 
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10);
+    doc.setFontSize(8);
     doc.setTextColor(...darkText);
     doc.text('DESCRIPCIÓN', col1X + 3, y + 1);
     doc.text('CANT.', col2X + colCantW / 2, y + 1, { align: 'center' });
     doc.text('P. UNIT.', col3X + colUnitW / 2, y + 1, { align: 'center' });
     doc.text('SUBTOTAL', col4X + colSubW / 2, y + 1, { align: 'center' });
 
-    y += 9;
+    y += 8;
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(11);
-
+    doc.setFontSize(9);
 
     carrito.value.forEach((item, index) => {
-      const rowH = 9;
-
+      const rowH = 8;
 
       // Page break check
       if (y + rowH > pageHeight - margin - 50) {
@@ -661,11 +629,10 @@ function exportToPDF() {
 
     // Subtotal
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(11);
+    doc.setFontSize(9);
     doc.setTextColor(...darkText);
     doc.text('Subtotal:', totX + 5, y);
     doc.text(`$ ${totalValue.toFixed(2)}`, rightX - 5, y, { align: 'right' });
-
 
 
     y += 7;
@@ -688,7 +655,7 @@ function exportToPDF() {
     doc.rect(totX - 2, y - 5, totW + 2, 10);
 
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(12);
+    doc.setFontSize(10);
     doc.setTextColor(...primaryColor);
     doc.text('TOTAL A PAGAR', totX + 5, y + 1);
     doc.text(`$ ${totalValue.toFixed(2)}`, rightX - 5, y + 1, { align: 'right' });
@@ -697,19 +664,17 @@ function exportToPDF() {
     // Amount in words (conventional)
     y += 14;
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
+    doc.setFontSize(8);
     doc.setTextColor(...mediumGray);
     doc.text(`Valor en letras:  ${numeroALetras(totalValue)} PESOS M/C.`, margin, y);
 
 
     // Observation section
-
     y += 10;
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(11);
+    doc.setFontSize(9);
     doc.setTextColor(...primaryColor);
     doc.text('OBSERVACIONES', margin, y);
-
     y += 4;
     doc.setDrawColor(...borderGray);
     doc.setLineWidth(0.3);
@@ -717,10 +682,9 @@ function exportToPDF() {
 
     y += 6;
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
+    doc.setFontSize(8);
     doc.setTextColor(...mediumGray);
     doc.text('Pago realizado en efectivo. No se aceptan devoluciones.', margin, y);
-
 
     // Authorized signature area
     y += 20;
@@ -1085,17 +1049,13 @@ header button:hover {
   }
 
 
-.unit-price {
+  .unit-price {
     font-weight: 800;
     color: #0b3d2e;
     display: block;
     width: 100%;
     text-align: right;
     padding-right: 4px;
-
-    /* Ajuste visual: mover un poquito hacia la izquierda y mantener el valor bajo el header */
-    position: relative;
-    left: -24px;
   }
 
 
