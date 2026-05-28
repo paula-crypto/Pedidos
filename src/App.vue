@@ -842,7 +842,24 @@ function exportToPDF() {
     // Footer
     drawFooter();
 
-    doc.output('dataurlnewwindow');
+    const pdfBlob = doc.output('blob');
+    const pdfUrl = URL.createObjectURL(pdfBlob);
+    const nuevaVentana = window.open('', '_blank');
+    if (nuevaVentana) {
+      nuevaVentana.document.write(`
+        <html>
+          <head><title>Factura</title></head>
+          <body style="margin:0;height:100vh;">
+            <iframe src="${pdfUrl}" width="100%" height="100%" style="border:none;"></iframe>
+          </body>
+        </html>
+      `);
+      nuevaVentana.document.close();
+    } else {
+      window.location.href = pdfUrl;
+    }
+
+    setTimeout(() => URL.revokeObjectURL(pdfUrl), 10000);
     finalizarPDF();
   }
 
@@ -902,8 +919,23 @@ function exportToPDF() {
   }
 
   body, html {
-    background-size: cover;
     min-height: 100vh;
+    background-image: url('https://images.unsplash.com/photo-1495521821757-a1efb6729352?w=1200&q=80');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-color: rgba(0, 0, 0, 0.35);
+    background-blend-mode: overlay;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+    pointer-events: none;
+    z-index: -1;
   }
 
   header {
@@ -916,6 +948,9 @@ function exportToPDF() {
     border-bottom: 3px solid #ffd700;
     flex-wrap: wrap;
     gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 800;
   }
 
   header img {
@@ -979,13 +1014,17 @@ function exportToPDF() {
 .products {
   border: 1px solid #ddd;
   border-radius: 8px;
-  padding: 15px;
+  padding: 16px;
   text-align: center;
   background-color: #f9f9f9;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   cursor: pointer;
-  width: 250px;
-  flex-shrink: 0;
+  flex: 1 1 260px;
+  min-width: 260px;
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .products:hover {
@@ -1342,6 +1381,9 @@ header button:hover {
   padding: 16px 20px;
   background: rgba(0, 0, 0, 0.55);
   border-bottom: 1px solid rgba(255, 215, 0, 0.25);
+  position: sticky;
+  top: 0;
+  z-index: 750;
 }
 
 .chip {
@@ -1486,12 +1528,25 @@ header button:hover {
     margin: 0;
   }
   #menu {
-    padding: 28px 12px;
+    padding: 18px 12px;
     gap: 14px;
   }
 
   .products {
-    width: min(250px, 100%);
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    padding: 16px;
+    max-width: 300px;
+  }
+
+  .products h1 {
+    font-size: 1.35em;
+  }
+
+  .products p,
+  .precio {
+    font-size: 1em;
   }
 
   /* Modal carrito: que no quede cortado en pantallas chicas */
