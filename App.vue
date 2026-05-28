@@ -45,7 +45,7 @@
 </div>
 
 
-<div class="modal-backdrop" v-show="mostrarFormProducto" @click="toggleFormProducto" aria-hidden="true"></div>
+<div class="modal-backdrop" v-show="mostrarFormProducto"></div>
 
 <div class="agregar-producto-modal" v-show="mostrarFormProducto">
   <div class="modal-header">
@@ -56,15 +56,15 @@
   </div>
 
   <form @submit.prevent="agregarProductoAlMenu">
-    <input v-model="nuevoNombre" type="text" placeholder="Nombre del producto"  />
-    <input v-model="nuevaImagen" type="url" placeholder="URL de la imagen"  />
-    <input v-model="nuevaDescripcion" type="text" placeholder="Descripción"  />
+    <input v-model="nuevoNombre" type="text" placeholder="Nombre del producto" required />
+    <input v-model="nuevaImagen" type="url" placeholder="URL de la imagen" required />
+    <input v-model="nuevaDescripcion" type="text" placeholder="Descripción" required />
     <label for="nuevoPrecio">Precio
-    <input v-model.number="nuevoPrecio" type="number" min="0" step="0.01" placeholder="Precio"  />
+    <input v-model.number="nuevoPrecio" type="number" min="0" step="0.01" placeholder="Precio" required />
     </label>
         <label for="nuevoPrecio">Cantidades
         
-    <input v-model.number="nuevasUnidades" type="number" min="1" step="1" placeholder="Unidades"  />
+    <input v-model.number="nuevasUnidades" type="number" min="1" step="1" placeholder="Unidades" required />
     </label>
     <button type="submit">Agregar al menú</button>
   </form>
@@ -112,8 +112,7 @@
             </div>
 
             <div class="col-precio">
-              {{ formatoMoneda(item.precio) }}
-
+              <span class="unit-price">$ {{ item.precio.toFixed(2) }}</span>
             </div>
           </div>
 
@@ -122,8 +121,7 @@
           </button>
         </div>
         <div class="total">
-<strong>Total: {{ formatoMoneda(total) }}</strong>
-
+<strong>Total: ${{ total.toFixed(2) }}</strong>
         </div>
         <div class="factura">
           <button @click="exportToPDF()">Comprar</button>
@@ -133,23 +131,12 @@
 </div>
 
 <div id="menu">
-<<<<<<< HEAD
-    <div v-if="menuFiltrado.length === 0" class="carrito-vacio">
-      <p>Producto no disponibles al filtrar</p>
-    </div>
-
     <div v-for="plato in menuFiltrado" :class="['products', { agotado: plato.unidades === 0 }]">
 
-
-=======
-    <div v-for="plato in menuFiltrado" :class="['products', { agotado: plato.unidades === 0 }]">
-
->>>>>>> c40c485e1be9801dd52965d8e4795e767011796e
       <img :src="plato.imagen" :alt="plato.nombre">
       <h1>{{ plato.nombre }}</h1>
       <p>{{ plato.descripcion }}</p>
-<p class="precio">{{ formatoMoneda(plato.precio) }}</p>
-
+      <p class="precio">${{ plato.precio }}</p>
       <button @click="agregarAlCarrito(plato)" :disabled="plato.unidades === 0">{{ plato.unidades === 0 ? 'Agotado' : 'Agregar al carrito' }}</button>
       <p class="unidad">Unidades: <span>{{ plato.unidades }}</span></p>
       <div v-if="plato.destacado" class="destacado-indicador">¡Nuevo!</div>
@@ -159,23 +146,13 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue';
+import { computed, ref } from 'vue';
 import { jsPDF } from 'jspdf';
-<<<<<<< HEAD
-import Swal from 'sweetalert2';
-import 'sweetalert2/dist/sweetalert2.min.css';
 const busqueda = ref('');
-const busquedaDebounced = ref('');
-let debounceTimer = null;
-=======
-const busqueda = ref('');
->>>>>>> c40c485e1be9801dd52965d8e4795e767011796e
 const mostrarModal = ref(false);
 const mostrarFormProducto = ref(false);
 const procesando = ref(false);
 const mostrarExitoso = ref(false);
-
-const carrito = ref(cargarCarrito());
 
 const carritoTotalItems = computed(() =>
   carrito.value.reduce((acc, item) => acc + item.cantidad, 0)
@@ -206,16 +183,13 @@ function cargarUnidades() {
 
 const unidadesGuardadas = cargarUnidades();
 
-<<<<<<< HEAD
-const menu = ref([]);
-
 const categorias = computed(() => {
   const set = new Set(menu.value.map(p => p.categoria).filter(Boolean));
   return Array.from(set);
 });
 
 const menuFiltrado = computed(() => {
-  const q = busquedaDebounced.value;
+  const q = busqueda.value.trim().toLowerCase();
   const cat = categoriaSeleccionada.value;
 
   return menu.value.filter(plato => {
@@ -225,63 +199,8 @@ const menuFiltrado = computed(() => {
   });
 });
 
-watch(busqueda, (value) => {
-  clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(() => {
-    busquedaDebounced.value = value.trim().toLowerCase();
-  }, 500);
-  if (!value.trim()) {
-    busquedaDebounced.value = '';
-  }
-});
 
-let yaMostradoProductoNoDisponible = false;
-watch(
-  () => [busquedaDebounced.value, categoriaSeleccionada.value, menuFiltrado.value.length],
-  ([q, _cat, len]) => {
-    if (!q) {
-      yaMostradoProductoNoDisponible = false;
-      return;
-    }
-
-    if (len === 0 && !yaMostradoProductoNoDisponible) {
-      yaMostradoProductoNoDisponible = true;
-      Swal.fire({
-        icon: 'warning',
-        title: 'Producto no disponible',
-        text: 'No se encontraron productos con la búsqueda actual. Verifica el nombre o prueba otro término.',
-        confirmButtonText: 'Entendido',
-        confirmButtonColor: '#22c55e',
-        background: '#fff',
-        iconColor: '#f59e0b',
-      });
-      return;
-    }
-
-    if (len > 0) {
-      yaMostradoProductoNoDisponible = false;
-    }
-  }
-);
-
-function formatoMoneda(valor) {
-  const num = typeof valor === 'number' ? valor : Number(valor);
-  const formatter = new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    currencyDisplay: 'symbol',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-    useGrouping: true,
-  });
-
-  return Number.isNaN(num) ? formatter.format(0) : formatter.format(num);
-}
-
-
-
-
-menu.value = [
+const menu = ref([
   { id: 1, nombre: "Hamburguesa", categoria: 'Hamburguesas', imagen: "https://png.pngtree.com/png-vector/20250429/ourmid/pngtree-burger-image-with-white-background-png-image_16049638.png", descripcion: "Carne de res, cebolla salteada, lechuga, tomate y papas", precio: 12.50, unidades: unidadesGuardadas?.[0] ?? 15 },
   { id: 2, nombre: "Hamburguesa Doble", categoria: 'Hamburguesas', imagen: "https://png.pngtree.com/png-clipart/20240321/original/pngtree-double-cheese-burger-png-image_14644513.png", descripcion: "Doble carne, doble queso y vegetales", precio: 15.00, unidades: unidadesGuardadas?.[1] ?? 15 },
   { id: 3, nombre: "Hamburguesa Triple", categoria: 'Hamburguesas', imagen: "https://png.pngtree.com/png-clipart/20250507/original/pngtree-triple-cheeseburger-delicious-stacked-food-isolated-png-image_20937321.png", descripcion: "Triple carne,queso y vegetales", precio: 8.00, unidades: unidadesGuardadas?.[2] ?? 15 },
@@ -320,49 +239,11 @@ menu.value = [
 
 
   { id: 29, nombre: "Tarta de Queso", categoria: 'Postres', imagen: "https://img.freepik.com/fotos-premium/rebanada-queso-corteza-blanca_1019429-43225.jpg?semt=ais_hybrid&w=740&q=80", descripcion: "Tarta de queso cremosa ", precio: 7.00, unidades: unidadesGuardadas?.[28] ?? 15 },
-  { id: 30, nombre: "Helado Artesanal", categoria: 'Postres', imagen: "https://png.pngtree.com/png-clipart/20250108/original/pngtree-flavorful-ice-cream-collection-with-fresh-berries-png-image_19755817.png", descripcion: "Helado artesanal en varios sabores", precio: 5.50, unidades: unidadesGuardadas?.[29] ?? 15 }
-];
-=======
-const menuFiltrado = computed(() => {
-  const q = busqueda.value.trim().toLowerCase();
-  if (!q) return menu.value;
-  return menu.value.filter(plato => plato.nombre.toLowerCase().includes(q));
-});
+  { id: 30, nombre: "Helado Artesanal", categoria: 'Postres', imagen: "https://png.pngtree.com/png-clipart/20250108/original/pngtree-flavorful-ice-cream-collection-with-fresh-berries-png-image_19755817.png", descripcion: "Helado artesanal en varios sabores", precio: 5.50, unidades: unidadesGuardadas?.[29] ?? 15 },
 
-const menu = ref([
-  { id: 1, nombre: "Hamburguesa", imagen: "https://png.pngtree.com/png-vector/20250429/ourmid/pngtree-burger-image-with-white-background-png-image_16049638.png", descripcion: "Carne de res, cebolla salteada, lechuga, tomate y papas", precio: 12.50, unidades: unidadesGuardadas?.[0] ?? 15 },
-  { id: 2, nombre: "Hamburguesa Doble", imagen: "https://png.pngtree.com/png-clipart/20240321/original/pngtree-double-cheese-burger-png-image_14644513.png", descripcion: "Doble carne, doble queso y vegetales", precio: 15.00, unidades: unidadesGuardadas?.[1] ?? 15 },
-  { id: 3, nombre: "Hamburguesa Triple", imagen: "https://png.pngtree.com/png-clipart/20250507/original/pngtree-triple-cheeseburger-delicious-stacked-food-isolated-png-image_20937321.png", descripcion: "Triple carne,queso y vegetales", precio: 8.00, unidades: unidadesGuardadas?.[2] ?? 15 },
-  { id: 4, nombre: "Perro Caliente", imagen: "https://png.pngtree.com/png-clipart/20241129/original/pngtree-hot-dog-with-mustard-and-ketchup-isolated-on-a-transparent-background-png-image_17419880.png", descripcion: "Perro caliente con salchicha, tocino y salsas", precio: 10.00, unidades: unidadesGuardadas?.[3] ?? 15 },
-  { id: 5, nombre: "Salchipapa", imagen: "https://static.vecteezy.com/system/resources/thumbnails/032/325/506/small/french-fries-with-cheese-and-bacon-isolated-on-transparent-background-file-cut-out-ai-generated-png.png", descripcion: "Papas crujientes con salchicha, queso y salsas", precio: 9.50, unidades: unidadesGuardadas?.[4] ?? 15 },
-  { id: 6, nombre: "Patacón relleno", imagen: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQdGzdMHi52Cq74JCCzjrXvRg9PY3aCyugPHA&s", descripcion: "Plátano frito relleno de carne y queso", precio: 11.00, unidades: unidadesGuardadas?.[5] ?? 15 },
-  { id: 7, nombre: "Tacos de Pollo", imagen: "https://png.pngtree.com/png-vector/20241110/ourmid/pngtree-authentic-chicken-tacos-with-cilantro-png-image_14338727.png", descripcion: "Tacos con pollo desmenuzado y vegetales frescos", precio: 9.00, unidades: unidadesGuardadas?.[6] ?? 15 },
-  { id: 8, nombre: "Quesadilla", imagen: "https://png.pngtree.com/png-clipart/20241003/original/pngtree-hearty-mexican-quesadilla-perfectly-grilled-with-meat-and-veggies-png-image_16190692.png", descripcion: "Tortilla con queso fundido y relleno a elegir", precio: 8.50, unidades: unidadesGuardadas?.[7] ?? 15 },
-  { id: 9, nombre: "Pizza Personal", imagen: "https://png.pngtree.com/png-clipart/20250106/original/pngtree-yummy-stretchy-cheese-pepperoni-pizza-png-image_19960043.png", descripcion: "Pizza pequeña con queso y peperoni", precio: 13.00, unidades: unidadesGuardadas?.[8] ?? 15 },
-  { id: 10, nombre: "Sandwich Cubano", imagen: "https://static.vecteezy.com/system/resources/thumbnails/055/669/484/small/delicious-cuban-sandwich-with-layers-of-meats-and-melted-cheese-served-fresh-png.png", descripcion: "Pan con jamón, cerdo y queso derretido", precio: 10.50, unidades: unidadesGuardadas?.[9] ?? 15 },
-  { id: 11, nombre: "Pollo Frito", imagen: "https://png.pngtree.com/png-clipart/20231017/original/pngtree-fried-chicken-american-food-png-image_13325963.png", descripcion: "Pollo crujiente con papas y ensalada", precio: 11.50, unidades: unidadesGuardadas?.[10] ?? 15 },
-  { id: 12, nombre: "Nuggets de Pollo", imagen: "https://png.pngtree.com/png-clipart/20250104/original/pngtree-mouth-watering-fried-chicken-nuggets-and-fries-for-fast-food-lovers-png-image_18953065.png", descripcion: "Nuggets dorados con salsa y papas", precio: 7.50, unidades: unidadesGuardadas?.[11] ?? 15 },
-  { id: 13, nombre: "Empanadas", imagen: "https://toppng.com/uploads/preview/empanadas-colombianas-png-empanada-de-maiz-11562940498m2ioxfluel.png", descripcion: "Empanadas de carne o queso, 3 unidades", precio: 6.00, unidades: unidadesGuardadas?.[12] ?? 15 },
-  { id: 14, nombre: "Alitas BBQ", imagen: "https://png.pngtree.com/png-clipart/20250111/original/pngtree-realistic-high-quality-bbq-chicken-wings-platter-png-image_19087161.png", descripcion: "Alitas bañadas en salsa BBQ picante", precio: 10.00, unidades: unidadesGuardadas?.[13] ?? 15 },
-  { id: 15, nombre: "Nachos con Queso", imagen: "https://toppng.com/uploads/preview/ork-sausage-nachos-nachos-con-carne-y-queso-115635741348pfqgjldlr.png", descripcion: "Nachos crujientes con queso derretido y jalapeños", precio: 8.00, unidades: unidadesGuardadas?.[14] ?? 15 },
-  { id: 16, nombre: "Camarones Fritos", imagen: "https://static.vecteezy.com/system/resources/thumbnails/050/738/203/small/high-quality-butterfly-shrimps-or-fried-prawns-that-look-delicious-isolated-on-transparent-background-for-menus-png.png", descripcion: "Camarones Fritos con salsa de la casa", precio: 14.00, unidades: unidadesGuardadas?.[15] ?? 15 },
-  { id: 17, nombre: "Ceviche", imagen: "https://png.pngtree.com/png-clipart/20250122/original/pngtree-healthy-shrimp-ceviche-with-fresh-herbs-and-veggies-png-image_19983518.png", descripcion: "Pescado fresco marinado en limón y especias", precio: 12.00, unidades: unidadesGuardadas?.[16] ?? 15 },
-  { id: 18, nombre: "Arepa Rellena", imagen: "https://png.pngtree.com/png-clipart/20190630/original/pngtree-stuffed-arepa-png-image_4172135.jpg", descripcion: "Arepa con queso, Carne y salchicha", precio: 7.00, unidades: unidadesGuardadas?.[17] ?? 15 },
-  { id: 19, nombre: "Churros", imagen: "https://img.freepik.com/psd-gratis/delicious-churros-with-rich-melted-chocolate-sauce_84443-72596.jpg?semt=ais_hybrid&w=740&q=80", descripcion: "Churros crujientes con chocolate caliente", precio: 5.50, unidades: unidadesGuardadas?.[18] ?? 15 },
-  { id: 20, nombre: "Pastel de Tres Leches", imagen: "https://img.freepik.com/psd-gratis/delicioso-pastel-crema-coco-rebanada-dulce-regalo_191095-86310.jpg?semt=ais_hybrid&w=740&q=80", descripcion: "Pastel húmedo de tres leches", precio: 6.50, unidades: unidadesGuardadas?.[19] ?? 15 },
-  { id: 21, nombre: "Flan de Caramelo", imagen: "https://png.pngtree.com/png-clipart/20250123/original/pngtree-delicious-spanish-flan-with-rich-caramel-sauce-on-a-plate-png-image_19996289.png", descripcion: "Flan casero con caramelo tradicional", precio: 5.00, unidades: unidadesGuardadas?.[20] ?? 15 },
-  { id: 22, nombre: "Batido de Frutas", imagen: "https://img.freepik.com/vector-premium/batido-coctel-jugo-fresa-o-yogur-vaso-paja-entero-mitad-fresa-aislado-sobre-fondo-transparente-ilustracion-vector-3d-realista_545793-1246.jpg", descripcion: "Batidos frescos de frutas de temporada", precio: 4.50, unidades: unidadesGuardadas?.[21] ?? 15 },
-  { id: 23, nombre: "Jugo Natural", imagen: "https://png.pngtree.com/png-clipart/20250609/original/pngtree-refreshing-fruit-smoothies-with-strawberries-mango-and-orange-png-image_21148205.png", descripcion: "Jugo natural recién exprimido", precio: 3.50, unidades: unidadesGuardadas?.[22] ?? 15 },
-  { id: 24, nombre: "Agua Fresca", imagen: "https://png.pngtree.com/png-vector/20231116/ourmid/pngtree-glass-of-water-natural-png-image_10480871.png", descripcion: "Agua fresca ", precio: 2.00, unidades: unidadesGuardadas?.[23] ?? 15 },
-  { id: 25, nombre: "Ensalada César", imagen: "https://png.pngtree.com/png-clipart/20250102/original/pngtree-caesar-salad-dish-png-image_18599836.png", descripcion: "Ensalada fresca con pechuga de pollo", precio: 9.00, unidades: unidadesGuardadas?.[24] ?? 15 },
-  { id: 26, nombre: "Sushi Roll", imagen: "https://static.vecteezy.com/system/resources/thumbnails/054/065/072/small_2x/high-resolution-sushi-roll-illustration-transparent-background-for-food-themed-art-png.png", descripcion: "Roll de sushi fresco con pescado y vegetales", precio: 11.00, unidades: unidadesGuardadas?.[25] ?? 15 },
-  { id: 27, nombre: "Fideos a la Carbonara", imagen: "https://static.vecteezy.com/system/resources/previews/056/615/020/non_2x/spaghetti-carbonara-top-view-isolate-on-transparent-background-png.png", descripcion: "Fideos en salsa cremosa con tocino", precio: 10.50, unidades: unidadesGuardadas?.[26] ?? 15 },
-  { id: 28, nombre: "Poutine", imagen: "https://static.vecteezy.com/system/resources/previews/055/299/651/non_2x/delicious-poutine-plate-on-transparent-background-png.png", descripcion: "Papas fritas con queso fundido y salsa", precio: 8.50, unidades: unidadesGuardadas?.[27] ?? 15 },
-  { id: 29, nombre: "Tarta de Queso", imagen: "https://img.freepik.com/fotos-premium/rebanada-queso-corteza-blanca_1019429-43225.jpg?semt=ais_hybrid&w=740&q=80", descripcion: "Tarta de queso cremosa ", precio: 7.00, unidades: unidadesGuardadas?.[28] ?? 15 },
-  { id: 30, nombre: "Helado Artesanal", imagen: "https://png.pngtree.com/png-clipart/20250108/original/pngtree-flavorful-ice-cream-collection-with-fresh-berries-png-image_19755817.png", descripcion: "Helado artesanal en varios sabores", precio: 5.50, unidades: unidadesGuardadas?.[29] ?? 15 },
 ]);
->>>>>>> c40c485e1be9801dd52965d8e4795e767011796e
 
+const carrito = ref(cargarCarrito());
 const nuevoNombre = ref('');
 const nuevaImagen = ref('');
 const nuevaDescripcion = ref('');
@@ -403,12 +284,7 @@ function agregarProductoAlMenu() {
 
 
   if (!nombre || !imagen || !descripcion || isNaN(precio) || precio <= 0 || isNaN(unidades) || unidades <= 0) {
-    Swal.fire({
-      icon: 'error',
-      title: 'Datos incompletos',
-      text: 'Ingresa todos los datos del producto correctamente.',
-      confirmButtonText: 'Entendido'
-    });
+    alert('Ingresa todos los datos del producto correctamente.');
     return;
   }
 
@@ -433,18 +309,6 @@ function agregarProductoAlMenu() {
 
 
 
-  // Mensaje de éxito al agregar el producto al menú
-  Swal.fire({
-    position: 'center',
-    icon: 'success',
-    title: 'Producto agregado',
-    html: `<div style="font-size:16px">✅ <b>${nombre}</b> se agregó exitosamente al menú.</div>`,
-    confirmButtonText: 'OK',
-    showConfirmButton: true,
-    allowOutsideClick: false,
-    backdrop: true
-  });
-
   nuevoNombre.value = '';
   nuevaImagen.value = '';
   nuevaDescripcion.value = '';
@@ -464,12 +328,7 @@ function guardarCarrito() {
 
 function agregarAlCarrito(plato) {
   if (plato.unidades == 0) {
-    Swal.fire({
-      icon: 'warning',
-      title: 'Agotado',
-      text: 'No hay unidades disponibles',
-      confirmButtonText: 'Entendido'
-    });
+    alert('No hay unidades disponibles');
     return;
   }
 
@@ -492,8 +351,6 @@ function agregarAlCarrito(plato) {
 
   // (Solo badge encima del botón del carrito)
   syncBadgeVisibility();
-
-
 }
 
 function guardarUnidades() {
@@ -577,18 +434,17 @@ function exportToPDF() {
 
       // Restaurant name and info (left side)
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(18);
+      doc.setFontSize(16);
       doc.setTextColor(...primaryColor);
       doc.text('FAST FOOD BURGER', logoX, headerY + 6);
 
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(10);
+      doc.setFontSize(9);
       doc.setTextColor(...mediumGray);
-      doc.text('Restaurante de Comida Rápida', logoX, headerY + 14);
-      doc.text('NIT: 900.123.456-7', logoX, headerY + 20);
-      doc.text('Calle 123 # 45-67, Ciudad', logoX, headerY + 26);
-      doc.text('Tel: (123) 456-7890', logoX, headerY + 32);
-
+      doc.text('Restaurante de Comida Rápida', logoX, headerY + 13);
+      doc.text('NIT: 900.123.456-7', logoX, headerY + 19);
+      doc.text('Calle 123 # 45-67, Ciudad', logoX, headerY + 25);
+      doc.text('Tel: (123) 456-7890', logoX, headerY + 31);
 
       // Factura info box (right side)
       const boxW = 75;
@@ -602,26 +458,25 @@ function exportToPDF() {
       doc.rect(boxX, boxY, boxW, boxH);
 
       let by = boxY + 8;
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(13);
-    doc.setTextColor(...primaryColor);
-    doc.text('FACTURA DE VENTA', boxX + boxW / 2, by, { align: 'center' });
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(...primaryColor);
+      doc.text('FACTURA DE VENTA', boxX + boxW / 2, by, { align: 'center' });
 
-    by += 7;
-    doc.setDrawColor(...borderGray);
-    doc.setLineWidth(0.3);
-    doc.line(boxX + 5, by, boxX + boxW - 5, by);
+      by += 7;
+      doc.setDrawColor(...borderGray);
+      doc.setLineWidth(0.3);
+      doc.line(boxX + 5, by, boxX + boxW - 5, by);
 
-    by += 7;
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
-    doc.setTextColor(...darkText);
-    doc.text(`No.  ${facturaNum}`, boxX + 6, by);
-    by += 6;
-    doc.text(`Fecha:  ${fecha.toLocaleDateString('es-ES')}`, boxX + 6, by);
-    by += 6;
-    doc.text(`Hora:  ${fecha.toLocaleTimeString('es-ES')}`, boxX + 6, by);
-
+      by += 7;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(...darkText);
+      doc.text(`No.  ${facturaNum}`, boxX + 6, by);
+      by += 6;
+      doc.text(`Fecha:  ${fecha.toLocaleDateString('es-ES')}`, boxX + 6, by);
+      by += 6;
+      doc.text(`Hora:  ${fecha.toLocaleTimeString('es-ES')}`, boxX + 6, by);
 
       // Horizontal separator line
       return headerY + 42;
@@ -635,12 +490,11 @@ function exportToPDF() {
       doc.line(margin, footerY, rightX, footerY);
 
       doc.setFont('helvetica', 'italic');
-      doc.setFontSize(10);
+      doc.setFontSize(8);
       doc.setTextColor(...mediumGray);
       doc.text('Gracias por su compra. Vuelva pronto.', margin, footerY + 5);
-      doc.text('Este documento es un comprobante de pago válido.', margin, footerY + 11);
+      doc.text('Este documento es un comprobante de pago válido.', margin, footerY + 10);
       doc.text(`Página ${currentPage}`, rightX, footerY + 5, { align: 'right' });
-
     }
 
     let y = drawHeader();
@@ -654,7 +508,7 @@ function exportToPDF() {
     // CLIENTE section
     y += 12;
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(12);
+    doc.setFontSize(10);
     doc.setTextColor(...primaryColor);
     doc.text('DATOS DEL CLIENTE', margin, y);
 
@@ -665,16 +519,15 @@ function exportToPDF() {
 
     y += 8;
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(11);
+    doc.setFontSize(9);
     doc.setTextColor(...darkText);
     doc.text('Nombre:     Consumidor Final', margin, y);
-    y += 7;
+    y += 6;
     doc.text('Identificación:     222222222222', margin, y);
-    y += 7;
+    y += 6;
     doc.text('Dirección:     Ciudad', margin, y);
-    y += 7;
+    y += 6;
     doc.text('Teléfono:     N/A', margin, y);
-
 
     // Separator before table
     y += 10;
@@ -707,21 +560,19 @@ function exportToPDF() {
     doc.line(col4X, y - 5, col4X, y + 3);
 
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10);
+    doc.setFontSize(8);
     doc.setTextColor(...darkText);
     doc.text('DESCRIPCIÓN', col1X + 3, y + 1);
     doc.text('CANT.', col2X + colCantW / 2, y + 1, { align: 'center' });
     doc.text('P. UNIT.', col3X + colUnitW / 2, y + 1, { align: 'center' });
     doc.text('SUBTOTAL', col4X + colSubW / 2, y + 1, { align: 'center' });
 
-    y += 9;
+    y += 8;
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(11);
-
+    doc.setFontSize(9);
 
     carrito.value.forEach((item, index) => {
-      const rowH = 9;
-
+      const rowH = 8;
 
       // Page break check
       if (y + rowH > pageHeight - margin - 50) {
@@ -749,23 +600,8 @@ function exportToPDF() {
       doc.setTextColor(...darkText);
       doc.text(nombre, col1X + 3, y + 1);
       doc.text(item.cantidad.toString(), col2X + colCantW / 2, y + 1, { align: 'center' });
-      doc.text(new Intl.NumberFormat('es-CO', {
-        style: 'currency',
-        currency: 'COP',
-        currencyDisplay: 'symbol',
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-        useGrouping: true,
-      }).format(item.precio), col3X + colUnitW / 2, y + 1, { align: 'center' });
-      doc.text(new Intl.NumberFormat('es-CO', {
-        style: 'currency',
-        currency: 'COP',
-        currencyDisplay: 'symbol',
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-        useGrouping: true,
-      }).format(subtotal), col4X + colSubW / 2, y + 1, { align: 'center' });
-
+      doc.text(`$ ${item.precio.toFixed(2)}`, col3X + colUnitW / 2, y + 1, { align: 'center' });
+      doc.text(`$ ${subtotal.toFixed(2)}`, col4X + colSubW / 2, y + 1, { align: 'center' });
 
       // Row bottom border
       doc.setDrawColor(...borderGray);
@@ -793,33 +629,16 @@ function exportToPDF() {
 
     // Subtotal
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(11);
+    doc.setFontSize(9);
     doc.setTextColor(...darkText);
     doc.text('Subtotal:', totX + 5, y);
-    doc.text(new Intl.NumberFormat('es-CO', {
-      style: 'currency',
-      currency: 'COP',
-      currencyDisplay: 'symbol',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-      useGrouping: true,
-    }).format(totalValue), rightX - 5, y, { align: 'right' });
-
-
+    doc.text(`$ ${totalValue.toFixed(2)}`, rightX - 5, y, { align: 'right' });
 
 
     y += 7;
     // Impuestos
     doc.text('Impuestos (0%):', totX + 5, y);
-    doc.text(new Intl.NumberFormat('es-CO', {
-      style: 'currency',
-      currency: 'COP',
-      currencyDisplay: 'symbol',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-      useGrouping: true,
-    }).format(0), rightX - 5, y, { align: 'right' });
-
+    doc.text('$ 0.00', rightX - 5, y, { align: 'right' });
 
     y += 5;
     // Line before total
@@ -836,36 +655,26 @@ function exportToPDF() {
     doc.rect(totX - 2, y - 5, totW + 2, 10);
 
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(12);
+    doc.setFontSize(10);
     doc.setTextColor(...primaryColor);
     doc.text('TOTAL A PAGAR', totX + 5, y + 1);
-    doc.text(new Intl.NumberFormat('es-CO', {
-      style: 'currency',
-      currency: 'COP',
-      currencyDisplay: 'symbol',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-      useGrouping: true,
-    }).format(totalValue), rightX - 5, y + 1, { align: 'right' });
-
+    doc.text(`$ ${totalValue.toFixed(2)}`, rightX - 5, y + 1, { align: 'right' });
 
 
     // Amount in words (conventional)
     y += 14;
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
+    doc.setFontSize(8);
     doc.setTextColor(...mediumGray);
     doc.text(`Valor en letras:  ${numeroALetras(totalValue)} PESOS M/C.`, margin, y);
 
 
     // Observation section
-
     y += 10;
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(11);
+    doc.setFontSize(9);
     doc.setTextColor(...primaryColor);
     doc.text('OBSERVACIONES', margin, y);
-
     y += 4;
     doc.setDrawColor(...borderGray);
     doc.setLineWidth(0.3);
@@ -873,10 +682,9 @@ function exportToPDF() {
 
     y += 6;
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
+    doc.setFontSize(8);
     doc.setTextColor(...mediumGray);
     doc.text('Pago realizado en efectivo. No se aceptan devoluciones.', margin, y);
-
 
     // Authorized signature area
     y += 20;
@@ -895,7 +703,6 @@ function exportToPDF() {
     doc.output('dataurlnewwindow');
     finalizarPDF();
   }
-
 
   function numeroALetras(numero) {
     const unidades = ['', 'UNO', 'DOS', 'TRES', 'CUATRO', 'CINCO', 'SEIS', 'SIETE', 'OCHO', 'NUEVE'];
@@ -952,6 +759,7 @@ function exportToPDF() {
   }
 
   body, html {
+    background: url('./img/background.jpg') no-repeat center center fixed;
     background-size: cover;
     min-height: 100vh;
   }
@@ -972,27 +780,6 @@ function exportToPDF() {
     height: 98px;
     width: auto;
     max-width: 100%;
-  }
-
-  .header-search {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-    padding: 0 20px;
-  }
-
-  .search-input {
-    width: min(420px, 100%);
-    padding: 10px 14px;
-    border-radius: 10px;
-    border: 1px solid #333;
-    outline: none;
-    font-size: 1em;
-  }
-
-  .search-input:focus {
-    border-color: #ffd700;
-    box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.25);
   }
 
   .header-search {
@@ -1262,17 +1049,13 @@ header button:hover {
   }
 
 
-.unit-price {
+  .unit-price {
     font-weight: 800;
     color: #0b3d2e;
     display: block;
     width: 100%;
     text-align: right;
     padding-right: 4px;
-
-    /* Ajuste visual: mover un poquito hacia la izquierda y mantener el valor bajo el header */
-    position: relative;
-    left: -24px;
   }
 
 
@@ -1383,7 +1166,6 @@ header button:hover {
   font-weight: bold;
 }
 
-<<<<<<< HEAD
 
 .categorias-bar {
   display: flex;
@@ -1503,11 +1285,6 @@ header button:hover {
   }
 
   header {
-=======
-/* Responsive móvil: 650px hacia abajo */
-@media (max-width: 650px) {
-  header {
->>>>>>> c40c485e1be9801dd52965d8e4795e767011796e
     flex-direction: column;
     gap: 10px;
     padding: 14px 12px;
@@ -1516,7 +1293,6 @@ header button:hover {
   }
 
   header img {
-<<<<<<< HEAD
     height: 64px;
     width: auto;
     max-width: 100%;
@@ -1524,12 +1300,6 @@ header button:hover {
 
 
 
-=======
-    height: 52px;
-    width: auto;
-  }
-
->>>>>>> c40c485e1be9801dd52965d8e4795e767011796e
   /* Asegura centrado real incluso si otros estilos del header ponen width/margin raros */
   header .header-actions {
     width: 100%;
@@ -1559,43 +1329,16 @@ header button:hover {
 
   /* Modal carrito: que no quede cortado en pantallas chicas */
   .ventana-modal {
-<<<<<<< HEAD
     top: 0.5%;
 
-    min-width: 0;
-    max-height: 85vh;
-    padding: 16px;
-    font-size: 1.05rem;
-  }
-
-  .ventana-modal h2 {
-    font-size: 1.6em;
-  }
-
-  .factura button {
-    font-size: 1.25em;
-    padding: 18px 16px;
-  }
-
-  .total {
-    font-size: 1.4em;
-  }
-
-  .carrito-table-header .col-label,
-  .item-info span,
-  .qty-badge {
-    font-size: 1rem;
-  }
-=======
-    top: 10%;
     min-width: 0;
     max-height: 85vh;
     padding: 14px;
   }
 
+
   .ventana-modal h2 {
     font-size: 1.4em;
   }
->>>>>>> c40c485e1be9801dd52965d8e4795e767011796e
 }
 </style>
