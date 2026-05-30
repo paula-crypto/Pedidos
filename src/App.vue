@@ -64,16 +64,16 @@
   </button>
   </div>
 
-  <form @submit.prevent="agregarProductoAlMenu">
-    <input v-model="nuevoNombre" type="text" placeholder="Nombre del producto" required />
-    <input v-model="nuevaImagen" type="url" placeholder="URL de la imagen" required />
-    <input v-model="nuevaDescripcion" type="text" placeholder="Descripción" required />
+  <form @submit.prevent="agregarProductoAlMenu" novalidate>
+    <input v-model="nuevoNombre" type="text" placeholder="Nombre del producto" />
+    <input v-model="nuevaImagen" type="url" placeholder="URL de la imagen" />
+    <input v-model="nuevaDescripcion" type="text" placeholder="Descripción" />
     <label for="nuevoPrecio">Precio
-    <input v-model.number="nuevoPrecio" type="number" min="0" step="0.01" placeholder="Precio" required />
+    <input v-model.number="nuevoPrecio" type="number" min="0" step="0.01" placeholder="Precio" />
     </label>
         <label for="nuevoPrecio">Cantidades
         
-    <input v-model.number="nuevasUnidades" type="number" min="1" step="1" placeholder="Unidades" required />
+    <input v-model.number="nuevasUnidades" type="number" min="1" step="1" placeholder="Unidades" />
     </label>
     <button type="submit">Agregar al menú</button>
   </form>
@@ -125,7 +125,7 @@
             </div>
 
             <div class="col-precio">
-              <span class="unit-price">$ {{ item.precio.toFixed(2) }}</span>
+              <span class="unit-price">{{ formatoMoneda(item.precio) }}</span>
             </div>
           </div>
 
@@ -137,7 +137,7 @@
           </button>
         </div>
         <div class="total">
-<strong>Total: ${{ total.toFixed(2) }}</strong>
+<strong>Total: {{ formatoMoneda(total) }}</strong>
         </div>
         <div class="factura">
           <button @click="exportToPDF()">Comprar</button>
@@ -152,24 +152,28 @@
       <img :src="plato.imagen" :alt="plato.nombre">
       <h1>{{ plato.nombre }}</h1>
       <p>{{ plato.descripcion }}</p>
-      <p class="precio">${{ plato.precio }}</p>
+      <p class="precio">{{ formatoMoneda(plato.precio) }}</p>
       <button @click="agregarAlCarrito(plato)" :disabled="plato.unidades === 0">{{ plato.unidades === 0 ? 'Agotado' : 'Agregar al carrito' }}</button>
       <p class="unidad">Unidades: <span>{{ plato.unidades }}</span></p>
       <div v-if="plato.destacado" class="destacado-indicador">¡Nuevo!</div>
 
     </div>
-</div>
+  </div>
 </template>
 
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { jsPDF } from 'jspdf';
+import Swal from 'sweetalert2';
+import 'sweetalert2/dist/sweetalert2.min.css';
 const busqueda = ref('');
 const mostrarModal = ref(false);
 const mostrarFormProducto = ref(false);
 const procesando = ref(false);
 const mostrarExitoso = ref(false);
+const menu = ref([]);
 
+const carrito = ref(cargarCarrito());
 const carritoTotalItems = computed(() =>
   carrito.value.reduce((acc, item) => acc + item.cantidad, 0)
 );
@@ -215,8 +219,25 @@ const menuFiltrado = computed(() => {
   });
 });
 
+const alertaSinResultadosMostrada = ref(false);
 
-const menu = ref([
+watch([menuFiltrado, busqueda, categoriaSeleccionada], ([menuActual, busq, cat]) => {
+  const hayFiltroActivo = busq.trim().length > 0 || cat !== 'Todas';
+  if (menuActual.length === 0 && hayFiltroActivo && !alertaSinResultadosMostrada.value) {
+    Swal.fire({
+      title: 'No hay productos',
+      text: 'No se encontraron productos para tu búsqueda.',
+      confirmButtonText: 'Entendido',
+      allowOutsideClick: false
+    });
+    alertaSinResultadosMostrada.value = true;
+  } else if (menuActual.length > 0) {
+    alertaSinResultadosMostrada.value = false;
+  }
+});
+
+
+menu.value = [
   { id: 1, nombre: "Hamburguesa", categoria: 'Hamburguesas', imagen: "https://png.pngtree.com/png-vector/20250429/ourmid/pngtree-burger-image-with-white-background-png-image_16049638.png", descripcion: "Carne de res, cebolla salteada, lechuga, tomate y papas", precio: 12.50, unidades: unidadesGuardadas?.[0] ?? 15 },
   { id: 2, nombre: "Hamburguesa Doble", categoria: 'Hamburguesas', imagen: "https://png.pngtree.com/png-clipart/20240321/original/pngtree-double-cheese-burger-png-image_14644513.png", descripcion: "Doble carne, doble queso y vegetales", precio: 15.00, unidades: unidadesGuardadas?.[1] ?? 15 },
   { id: 3, nombre: "Hamburguesa Triple", categoria: 'Hamburguesas', imagen: "https://png.pngtree.com/png-clipart/20250507/original/pngtree-triple-cheeseburger-delicious-stacked-food-isolated-png-image_20937321.png", descripcion: "Triple carne,queso y vegetales", precio: 8.00, unidades: unidadesGuardadas?.[2] ?? 15 },
@@ -257,9 +278,9 @@ const menu = ref([
   { id: 29, nombre: "Tarta de Queso", categoria: 'Postres', imagen: "https://img.freepik.com/fotos-premium/rebanada-queso-corteza-blanca_1019429-43225.jpg?semt=ais_hybrid&w=740&q=80", descripcion: "Tarta de queso cremosa ", precio: 7.00, unidades: unidadesGuardadas?.[28] ?? 15 },
   { id: 30, nombre: "Helado Artesanal", categoria: 'Postres', imagen: "https://png.pngtree.com/png-clipart/20250108/original/pngtree-flavorful-ice-cream-collection-with-fresh-berries-png-image_19755817.png", descripcion: "Helado artesanal en varios sabores", precio: 5.50, unidades: unidadesGuardadas?.[29] ?? 15 },
 
-]);
+];
 
-const carrito = ref(cargarCarrito());
+// carrito defined earlier above
 const nuevoNombre = ref('');
 const nuevaImagen = ref('');
 const nuevaDescripcion = ref('');
@@ -300,7 +321,12 @@ function agregarProductoAlMenu() {
 
 
   if (!nombre || !imagen || !descripcion || isNaN(precio) || precio <= 0 || isNaN(unidades) || unidades <= 0) {
-    alert('Ingresa todos los datos del producto correctamente.');
+    Swal.fire({
+      icon: 'error',
+      title: 'Completa este campo',
+      text: 'Por favor completa todos los campos del producto.',
+      confirmButtonText: 'Entendido'
+    });
     return;
   }
 
@@ -323,7 +349,16 @@ function agregarProductoAlMenu() {
     if (item) item.destacado = false;
   }, 2000);
 
-
+  Swal.fire({
+    position: 'center',
+    icon: 'success',
+    title: 'Producto agregado',
+    html: `<div style="font-size:16px">✅ <b>${nombre}</b> se agregó exitosamente al menú.</div>`,
+    confirmButtonText: 'OK',
+    showConfirmButton: true,
+    allowOutsideClick: false,
+    backdrop: true
+  });
 
   nuevoNombre.value = '';
   nuevaImagen.value = '';
@@ -344,7 +379,12 @@ function guardarCarrito() {
 
 function agregarAlCarrito(plato) {
   if (plato.unidades == 0) {
-    alert('No hay unidades disponibles');
+    Swal.fire({
+      icon: 'warning',
+      title: 'Agotado',
+      text: 'No hay unidades disponibles',
+      confirmButtonText: 'Entendido'
+    });
     return;
   }
 
@@ -377,6 +417,18 @@ function guardarUnidades() {
 const total = computed(() =>
   carrito.value.reduce((acc, item) => acc + (item.precio * item.cantidad), 0)
 );
+
+function formatoMoneda(valor) {
+  const num = Number(valor);
+  if (Number.isNaN(num)) return 'COP 0,00';
+  return new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+    currencyDisplay: 'symbol'
+  }).format(num);
+}
 
 
 function eliminarDelCarrito(index) {
@@ -613,8 +665,8 @@ function exportToPDF() {
       doc.setTextColor(...darkText);
       doc.text(nombre, col1X + 3, y + 1);
       doc.text(item.cantidad.toString(), col2X + colCantW / 2, y + 1, { align: 'center' });
-      doc.text(`$ ${item.precio.toFixed(2)}`, col3X + colUnitW / 2, y + 1, { align: 'center' });
-      doc.text(`$ ${subtotal.toFixed(2)}`, col4X + colSubW / 2, y + 1, { align: 'center' });
+      doc.text(formatoMoneda(item.precio), col3X + colUnitW / 2, y + 1, { align: 'center' });
+      doc.text(formatoMoneda(subtotal), col4X + colSubW / 2, y + 1, { align: 'center' });
 
       // Row bottom border
       doc.setDrawColor(...borderGray);
@@ -645,13 +697,13 @@ function exportToPDF() {
     doc.setFontSize(9);
     doc.setTextColor(...darkText);
     doc.text('Subtotal:', totX + 5, y);
-    doc.text(`$ ${totalValue.toFixed(2)}`, rightX - 5, y, { align: 'right' });
+    doc.text(formatoMoneda(totalValue), rightX - 5, y, { align: 'right' });
 
 
     y += 7;
     // Impuestos
     doc.text('Impuestos (0%):', totX + 5, y);
-    doc.text('$ 0.00', rightX - 5, y, { align: 'right' });
+    doc.text(formatoMoneda(0), rightX - 5, y, { align: 'right' });
 
     y += 5;
     // Line before total
@@ -671,7 +723,7 @@ function exportToPDF() {
     doc.setFontSize(10);
     doc.setTextColor(...primaryColor);
     doc.text('TOTAL A PAGAR', totX + 5, y + 1);
-    doc.text(`$ ${totalValue.toFixed(2)}`, rightX - 5, y + 1, { align: 'right' });
+    doc.text(formatoMoneda(totalValue), rightX - 5, y + 1, { align: 'right' });
 
 
     // Amount in words (conventional)
@@ -797,6 +849,9 @@ function exportToPDF() {
     border-bottom: 3px solid #ffd700;
     flex-wrap: wrap;
     gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 900;
   }
 
   header img {
@@ -1210,7 +1265,7 @@ header button:hover {
 }
 
 
-.categorias-bar {
+ .categorias-bar {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
@@ -1218,7 +1273,7 @@ header button:hover {
   padding: 16px 20px;
   background: rgba(0, 0, 0, 0.55);
   border-bottom: 1px solid rgba(255, 215, 0, 0.25);
-}
+ }
 
 .chip {
   border: 1px solid rgba(255, 215, 0, 0.5);
@@ -1230,15 +1285,7 @@ header button:hover {
   font-weight: 600;
 }
 
- .chip.active {
-  background: #ffd700;
-  color: #000;
-  border-color: #ffd700;
-}
-
-.destacado-indicador{
-  margin-top: 8px;
-  font-weight: 800;
+.chip.active {
   color: #0ea5e9;
   font-size: 0.9em;
   background: rgba(14,165,233,0.12);
@@ -1285,103 +1332,85 @@ header button:hover {
 
 
 
-/* Responsive móvil: 650px hacia abajo */
-@media (max-width: 430px) {
-  header {
-    padding: 14px 12px;
-    gap: 10px;
-    justify-content: center;
-  }
-
-  header img {
-    height: 62px;
-    width: auto;
-    max-width: 85vw;
-    display: block;
-  }
-
-  header .header-search {
-    width: 100%;
-    justify-content: center;
-  }
-
-  header .header-actions {
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-  }
-}
-
+/* Responsive: mantén el header en una sola línea cuando sea posible */
 @media (max-width: 650px) {
   header {
-    padding: 14px 12px;
-    gap: 10px;
-  }
-
-  header img {
-    height: 56px;
-    width: auto;
-    max-width: 85vw;
-    display: block;
-    margin: 0 auto;
-  }
-
-  header {
-    flex-direction: column;
-    gap: 10px;
-    padding: 14px 12px;
-    justify-content: center;
+    padding: 12px 14px;
+    flex-direction: row;
+    gap: 8px;
+    justify-content: space-between;
     align-items: center;
   }
 
   header img {
-    height: 64px;
+    height: 48px;
     width: auto;
-    max-width: 100%;
+    max-width: 120px;
+    display: block;
   }
 
-
-
-  /* Asegura centrado real incluso si otros estilos del header ponen width/margin raros */
-  header .header-actions {
-    width: 100%;
+  .header-search {
+    flex: 1;
+    max-width: 520px;
+    margin: 0 10px;
     display: flex;
     justify-content: center;
+  }
 
-    gap: 10px;
+  .search-input {
+    width: 100%;
+    max-width: 340px;
+  }
+
+  header .header-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-shrink: 0;
   }
 
   header .btn-add,
-  header button {
-    /* Evita que el layout del menú quede muy “largo” por cada tarjeta */
-    width: 56px;
-    height: 56px;
-    font-size: 18px;
-    padding: 8px;
-    margin: 0;
+  header .carrito-btn {
+    width: 48px;
+    height: 48px;
+    padding: 6px;
+    font-size: 16px;
   }
+
   #menu {
-    padding: 28px 12px;
-    gap: 14px;
+    padding: 24px 12px;
+    gap: 12px;
   }
 
   .products {
     width: min(250px, 100%);
   }
 
-  /* Modal carrito: que no quede cortado en pantallas chicas */
   .ventana-modal {
     top: 0.5%;
-
     min-width: 0;
     max-height: 85vh;
-    padding: 14px;
+    padding: 12px;
+  }
+}
+
+@media (max-width: 430px) {
+  header {
+    padding: 10px 10px;
+    gap: 6px;
   }
 
+  header img {
+    height: 44px;
+    max-width: 100px;
+  }
 
-  .ventana-modal h2 {
-    font-size: 1.4em;
+  .search-input {
+    max-width: 220px;
+  }
+
+  header .header-actions {
+    gap: 6px;
   }
 }
 </style>
