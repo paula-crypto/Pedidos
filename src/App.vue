@@ -1,5 +1,4 @@
 <template>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <header>
   <img src="./img/logo-fast-food-burger-cartoon-vector-removebg-preview.png" alt="logo">
   <div class="header-search">
@@ -13,9 +12,17 @@
   </div>
 
   <div class="header-actions">
-    <button type="button" class="btn-add" @click="toggleFormProducto" title="Agregar producto al menú"><i class="fas fa-plus"></i></button>
-    <button @click="toggleModal()" class="carrito-btn">
-      <i class="fas fa-shopping-cart"></i>
+    <button type="button" class="btn-add" @click="toggleFormProducto" title="Agregar producto al menú">
+      <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+      </svg>
+    </button>
+    <button @click="toggleModal()" class="carrito-btn" aria-label="Abrir carrito">
+      <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M6 6h15l-1.5 9.5H8.5L6 6z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/>
+        <circle cx="9" cy="19" r="2" fill="currentColor"/>
+        <circle cx="17" cy="19" r="2" fill="currentColor"/>
+      </svg>
       <span v-if="carritoTotalItems > 0" class="carrito-badge" :class="{ mostrar: mostrarBadgeCarrito }">
         {{ carritoTotalItems }}
       </span>
@@ -51,7 +58,9 @@
   <div class="modal-header">
     <h2>Agregar producto al menú</h2>
   <button type="button" class="modal-close" @click="toggleFormProducto" aria-label="Cerrar">
-    <i class="fas fa-times" aria-hidden="true"></i>
+    <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </svg>
   </button>
   </div>
 
@@ -74,13 +83,17 @@
     <div class="carrito-header">
       <h2>Carrito de Compras</h2>
       <button type="button" class="carrito-close" @click="toggleModal" aria-label="Cerrar">
-        <i class="fas fa-times" aria-hidden="true"></i>
+        <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+        </svg>
       </button>
 
     </div>
     <div v-if="mostrarExitoso" class="mensaje-exitoso">
-
-      <i class="fas fa-check-circle"></i>
+      <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.4"/>
+        <path d="M8 12l2.5 2.5L16 9" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
       <p>¡Compra realizada con éxito!</p>
     </div>
     <div v-else-if="procesando" class="spinner-container">
@@ -117,7 +130,10 @@
           </div>
 
           <button class="btn-eliminar" @click="eliminarDelCarrito(index)" title="Eliminar producto">
-            <i class="fas fa-trash-alt"></i>
+            <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M6 7h12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M9 7V5h6v2M8 7v11h8V7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
           </button>
         </div>
         <div class="total">
@@ -387,11 +403,8 @@ function eliminarDelCarrito(index) {
 function exportToPDF() {
   procesando.value = true;
 
-  const logoUrl = new URL('./img/logo-fast-food-burger-cartoon-vector-removebg-preview.png', import.meta.url).href;
-  const logo = new Image();
-  logo.src = logoUrl;
-  logo.onload = () => generarPDF(logo);
-  logo.onerror = () => generarPDF();
+  // Generar PDF directamente sin esperar logo
+  generarPDF();
 
   function generarPDF(logoImage) {
     const doc = new jsPDF({
@@ -874,10 +887,10 @@ header .header-actions {
 header .btn-add,
 header button {
   background-color: #22c55e;
-  padding: 10px 16px;
+  padding: 12px;
   border-radius: 50%;
-  width: 50px;
-  height: 50px;
+  width: 60px;
+  height: 60px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1102,6 +1115,26 @@ header button:hover {
     transform: scale(1);
   }
 
+.icon-svg {
+  width: 2em;
+  height: 2em;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.btn-add svg,
+.carrito-btn svg,
+.modal-close svg,
+.carrito-close svg,
+.btn-eliminar svg {
+  width: 1.8em;
+  height: 1.8em;
+}
+
+.mensaje-exitoso svg {
+  width: 2.8em;
+  height: 2.8em;
+}
 
 
 .total {
@@ -1312,10 +1345,10 @@ header button:hover {
   header .btn-add,
   header button {
     /* Evita que el layout del menú quede muy “largo” por cada tarjeta */
-    width: 46px;
-    height: 42px;
+    width: 56px;
+    height: 56px;
     font-size: 18px;
-    padding: 0;
+    padding: 8px;
     margin: 0;
   }
   #menu {
