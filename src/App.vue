@@ -524,7 +524,7 @@ function exportToPDF() {
 
       let by = boxY + 8;
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(11);
+      doc.setFontSize(12);
       doc.setTextColor(...primaryColor);
       doc.text('FACTURA DE VENTA', boxX + boxW / 2, by, { align: 'center' });
 
@@ -625,7 +625,7 @@ function exportToPDF() {
     doc.line(col4X, y - 5, col4X, y + 3);
 
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(8);
+    doc.setFontSize(10);
     doc.setTextColor(...darkText);
     doc.text('DESCRIPCIÓN', col1X + 3, y + 1);
     doc.text('CANT.', col2X + colCantW / 2, y + 1, { align: 'center' });
@@ -634,7 +634,7 @@ function exportToPDF() {
 
     y += 8;
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
+    doc.setFontSize(10);
 
     carrito.value.forEach((item, index) => {
       const rowH = 8;
@@ -694,7 +694,7 @@ function exportToPDF() {
 
     // Subtotal
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
+    doc.setFontSize(10);
     doc.setTextColor(...darkText);
     doc.text('Subtotal:', totX + 5, y);
     doc.text(formatoMoneda(totalValue), rightX - 5, y, { align: 'right' });
@@ -720,8 +720,7 @@ function exportToPDF() {
     doc.rect(totX - 2, y - 5, totW + 2, 10);
 
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10);
-    doc.setTextColor(...primaryColor);
+      doc.setFontSize(12);
     doc.text('TOTAL A PAGAR', totX + 5, y + 1);
     doc.text(formatoMoneda(totalValue), rightX - 5, y + 1, { align: 'right' });
 
@@ -729,38 +728,9 @@ function exportToPDF() {
     // Amount in words (conventional)
     y += 14;
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
+    doc.setFontSize(9);
     doc.setTextColor(...mediumGray);
     doc.text(`Valor en letras:  ${numeroALetras(totalValue)} PESOS M/C.`, margin, y);
-
-
-    // Observation section
-    y += 10;
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(9);
-    doc.setTextColor(...primaryColor);
-    doc.text('OBSERVACIONES', margin, y);
-    y += 4;
-    doc.setDrawColor(...borderGray);
-    doc.setLineWidth(0.3);
-    doc.line(margin, y, margin + 45, y);
-
-    y += 6;
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    doc.setTextColor(...mediumGray);
-    doc.text('Pago realizado en efectivo. No se aceptan devoluciones.', margin, y);
-
-    // Authorized signature area
-    y += 20;
-    const sigX = margin + contentWidth * 0.6;
-    doc.setDrawColor(...darkText);
-    doc.setLineWidth(0.3);
-    doc.line(sigX, y, rightX, y);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    doc.setTextColor(...mediumGray);
-    doc.text('Firma Autorizada', sigX + 20, y + 5);
 
     // Footer
     drawFooter();
