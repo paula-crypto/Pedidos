@@ -713,7 +713,17 @@ function exportToPDF() {
     // Footer
     drawFooter();
 
-    doc.output('dataurlnewwindow');
+    const pdfBlob = doc.output('blob');
+    const fileName = 'Factura_FastFoodBurger.pdf';
+    const url = URL.createObjectURL(pdfBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
     finalizarPDF();
   }
 
