@@ -45,7 +45,7 @@
 </div>
 
 
-<div class="modal-backdrop" v-show="mostrarFormProducto" @click="toggleFormProducto" aria-hidden="true"></div>
+<div class="modal-backdrop" v-show="mostrarFormProducto"></div>
 
 <div class="agregar-producto-modal" v-show="mostrarFormProducto">
   <div class="modal-header">
@@ -56,15 +56,15 @@
   </div>
 
   <form @submit.prevent="agregarProductoAlMenu">
-    <input v-model="nuevoNombre" type="text" placeholder="Nombre del producto"  />
-    <input v-model="nuevaImagen" type="url" placeholder="URL de la imagen"  />
-    <input v-model="nuevaDescripcion" type="text" placeholder="Descripción"  />
+    <input v-model="nuevoNombre" type="text" placeholder="Nombre del producto" required />
+    <input v-model="nuevaImagen" type="url" placeholder="URL de la imagen" required />
+    <input v-model="nuevaDescripcion" type="text" placeholder="Descripción" required />
     <label for="nuevoPrecio">Precio
-    <input v-model.number="nuevoPrecio" type="number" min="0" step="0.01" placeholder="Precio"  />
+    <input v-model.number="nuevoPrecio" type="number" min="0" step="0.01" placeholder="Precio" required />
     </label>
         <label for="nuevoPrecio">Cantidades
         
-    <input v-model.number="nuevasUnidades" type="number" min="1" step="1" placeholder="Unidades"  />
+    <input v-model.number="nuevasUnidades" type="number" min="1" step="1" placeholder="Unidades" required />
     </label>
     <button type="submit">Agregar al menú</button>
   </form>
@@ -112,8 +112,7 @@
             </div>
 
             <div class="col-precio">
-              {{ formatoMoneda(item.precio) }}
-
+              <span class="unit-price">$ {{ item.precio.toFixed(2) }}</span>
             </div>
           </div>
 
@@ -122,8 +121,7 @@
           </button>
         </div>
         <div class="total">
-<strong>Total: {{ formatoMoneda(total) }}</strong>
-
+<strong>Total: ${{ total.toFixed(2) }}</strong>
         </div>
         <div class="factura">
           <button @click="exportToPDF()">Comprar</button>
@@ -133,18 +131,12 @@
 </div>
 
 <div id="menu">
-    <div v-if="menuFiltrado.length === 0" class="carrito-vacio">
-      <p>Producto no disponibles al filtrar</p>
-    </div>
-
     <div v-for="plato in menuFiltrado" :class="['products', { agotado: plato.unidades === 0 }]">
-
 
       <img :src="plato.imagen" :alt="plato.nombre">
       <h1>{{ plato.nombre }}</h1>
       <p>{{ plato.descripcion }}</p>
-<p class="precio">{{ formatoMoneda(plato.precio) }}</p>
-
+      <p class="precio">${{ plato.precio }}</p>
       <button @click="agregarAlCarrito(plato)" :disabled="plato.unidades === 0">{{ plato.unidades === 0 ? 'Agotado' : 'Agregar al carrito' }}</button>
       <p class="unidad">Unidades: <span>{{ plato.unidades }}</span></p>
       <div v-if="plato.destacado" class="destacado-indicador">¡Nuevo!</div>
@@ -154,19 +146,13 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue';
+import { computed, ref } from 'vue';
 import { jsPDF } from 'jspdf';
-import Swal from 'sweetalert2';
-import 'sweetalert2/dist/sweetalert2.min.css';
 const busqueda = ref('');
-const busquedaDebounced = ref('');
-let debounceTimer = null;
 const mostrarModal = ref(false);
 const mostrarFormProducto = ref(false);
 const procesando = ref(false);
 const mostrarExitoso = ref(false);
-
-const carrito = ref(cargarCarrito());
 
 const carritoTotalItems = computed(() =>
   carrito.value.reduce((acc, item) => acc + item.cantidad, 0)
@@ -197,15 +183,13 @@ function cargarUnidades() {
 
 const unidadesGuardadas = cargarUnidades();
 
-const menu = ref([]);
-
 const categorias = computed(() => {
   const set = new Set(menu.value.map(p => p.categoria).filter(Boolean));
   return Array.from(set);
 });
 
 const menuFiltrado = computed(() => {
-  const q = busquedaDebounced.value;
+  const q = busqueda.value.trim().toLowerCase();
   const cat = categoriaSeleccionada.value;
 
   return menu.value.filter(plato => {
@@ -215,63 +199,8 @@ const menuFiltrado = computed(() => {
   });
 });
 
-watch(busqueda, (value) => {
-  clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(() => {
-    busquedaDebounced.value = value.trim().toLowerCase();
-  }, 500);
-  if (!value.trim()) {
-    busquedaDebounced.value = '';
-  }
-});
 
-let yaMostradoProductoNoDisponible = false;
-watch(
-  () => [busquedaDebounced.value, categoriaSeleccionada.value, menuFiltrado.value.length],
-  ([q, _cat, len]) => {
-    if (!q) {
-      yaMostradoProductoNoDisponible = false;
-      return;
-    }
-
-    if (len === 0 && !yaMostradoProductoNoDisponible) {
-      yaMostradoProductoNoDisponible = true;
-      Swal.fire({
-        icon: 'warning',
-        title: 'Producto no disponible',
-        text: 'No se encontraron productos con la búsqueda actual. Verifica el nombre o prueba otro término.',
-        confirmButtonText: 'Entendido',
-        confirmButtonColor: '#22c55e',
-        background: '#fff',
-        iconColor: '#f59e0b',
-      });
-      return;
-    }
-
-    if (len > 0) {
-      yaMostradoProductoNoDisponible = false;
-    }
-  }
-);
-
-function formatoMoneda(valor) {
-  const num = typeof valor === 'number' ? valor : Number(valor);
-  const formatter = new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    currencyDisplay: 'symbol',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-    useGrouping: true,
-  });
-
-  return Number.isNaN(num) ? formatter.format(0) : formatter.format(num);
-}
-
-
-
-
-menu.value = [
+const menu = ref([
   { id: 1, nombre: "Hamburguesa", categoria: 'Hamburguesas', imagen: "https://png.pngtree.com/png-vector/20250429/ourmid/pngtree-burger-image-with-white-background-png-image_16049638.png", descripcion: "Carne de res, cebolla salteada, lechuga, tomate y papas", precio: 12.50, unidades: unidadesGuardadas?.[0] ?? 15 },
   { id: 2, nombre: "Hamburguesa Doble", categoria: 'Hamburguesas', imagen: "https://png.pngtree.com/png-clipart/20240321/original/pngtree-double-cheese-burger-png-image_14644513.png", descripcion: "Doble carne, doble queso y vegetales", precio: 15.00, unidades: unidadesGuardadas?.[1] ?? 15 },
   { id: 3, nombre: "Hamburguesa Triple", categoria: 'Hamburguesas', imagen: "https://png.pngtree.com/png-clipart/20250507/original/pngtree-triple-cheeseburger-delicious-stacked-food-isolated-png-image_20937321.png", descripcion: "Triple carne,queso y vegetales", precio: 8.00, unidades: unidadesGuardadas?.[2] ?? 15 },
@@ -310,9 +239,11 @@ menu.value = [
 
 
   { id: 29, nombre: "Tarta de Queso", categoria: 'Postres', imagen: "https://img.freepik.com/fotos-premium/rebanada-queso-corteza-blanca_1019429-43225.jpg?semt=ais_hybrid&w=740&q=80", descripcion: "Tarta de queso cremosa ", precio: 7.00, unidades: unidadesGuardadas?.[28] ?? 15 },
-  { id: 30, nombre: "Helado Artesanal", categoria: 'Postres', imagen: "https://png.pngtree.com/png-clipart/20250108/original/pngtree-flavorful-ice-cream-collection-with-fresh-berries-png-image_19755817.png", descripcion: "Helado artesanal en varios sabores", precio: 5.50, unidades: unidadesGuardadas?.[29] ?? 15 }
-];
+  { id: 30, nombre: "Helado Artesanal", categoria: 'Postres', imagen: "https://png.pngtree.com/png-clipart/20250108/original/pngtree-flavorful-ice-cream-collection-with-fresh-berries-png-image_19755817.png", descripcion: "Helado artesanal en varios sabores", precio: 5.50, unidades: unidadesGuardadas?.[29] ?? 15 },
 
+]);
+
+const carrito = ref(cargarCarrito());
 const nuevoNombre = ref('');
 const nuevaImagen = ref('');
 const nuevaDescripcion = ref('');
@@ -353,12 +284,7 @@ function agregarProductoAlMenu() {
 
 
   if (!nombre || !imagen || !descripcion || isNaN(precio) || precio <= 0 || isNaN(unidades) || unidades <= 0) {
-    Swal.fire({
-      icon: 'error',
-      title: 'Datos incompletos',
-      text: 'Ingresa todos los datos del producto correctamente.',
-      confirmButtonText: 'Entendido'
-    });
+    alert('Ingresa todos los datos del producto correctamente.');
     return;
   }
 
@@ -383,18 +309,6 @@ function agregarProductoAlMenu() {
 
 
 
-  // Mensaje de éxito al agregar el producto al menú
-  Swal.fire({
-    position: 'center',
-    icon: 'success',
-    title: 'Producto agregado',
-    html: `<div style="font-size:16px">✅ <b>${nombre}</b> se agregó exitosamente al menú.</div>`,
-    confirmButtonText: 'OK',
-    showConfirmButton: true,
-    allowOutsideClick: false,
-    backdrop: true
-  });
-
   nuevoNombre.value = '';
   nuevaImagen.value = '';
   nuevaDescripcion.value = '';
@@ -414,12 +328,7 @@ function guardarCarrito() {
 
 function agregarAlCarrito(plato) {
   if (plato.unidades == 0) {
-    Swal.fire({
-      icon: 'warning',
-      title: 'Agotado',
-      text: 'No hay unidades disponibles',
-      confirmButtonText: 'Entendido'
-    });
+    alert('No hay unidades disponibles');
     return;
   }
 
@@ -442,8 +351,6 @@ function agregarAlCarrito(plato) {
 
   // (Solo badge encima del botón del carrito)
   syncBadgeVisibility();
-
-
 }
 
 function guardarUnidades() {
@@ -527,18 +434,17 @@ function exportToPDF() {
 
       // Restaurant name and info (left side)
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(18);
+      doc.setFontSize(16);
       doc.setTextColor(...primaryColor);
       doc.text('FAST FOOD BURGER', logoX, headerY + 6);
 
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(10);
+      doc.setFontSize(9);
       doc.setTextColor(...mediumGray);
-      doc.text('Restaurante de Comida Rápida', logoX, headerY + 14);
-      doc.text('NIT: 900.123.456-7', logoX, headerY + 20);
-      doc.text('Calle 123 # 45-67, Ciudad', logoX, headerY + 26);
-      doc.text('Tel: (123) 456-7890', logoX, headerY + 32);
-
+      doc.text('Restaurante de Comida Rápida', logoX, headerY + 13);
+      doc.text('NIT: 900.123.456-7', logoX, headerY + 19);
+      doc.text('Calle 123 # 45-67, Ciudad', logoX, headerY + 25);
+      doc.text('Tel: (123) 456-7890', logoX, headerY + 31);
 
       // Factura info box (right side)
       const boxW = 75;
@@ -552,26 +458,25 @@ function exportToPDF() {
       doc.rect(boxX, boxY, boxW, boxH);
 
       let by = boxY + 8;
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(13);
-    doc.setTextColor(...primaryColor);
-    doc.text('FACTURA DE VENTA', boxX + boxW / 2, by, { align: 'center' });
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(...primaryColor);
+      doc.text('FACTURA DE VENTA', boxX + boxW / 2, by, { align: 'center' });
 
-    by += 7;
-    doc.setDrawColor(...borderGray);
-    doc.setLineWidth(0.3);
-    doc.line(boxX + 5, by, boxX + boxW - 5, by);
+      by += 7;
+      doc.setDrawColor(...borderGray);
+      doc.setLineWidth(0.3);
+      doc.line(boxX + 5, by, boxX + boxW - 5, by);
 
-    by += 7;
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
-    doc.setTextColor(...darkText);
-    doc.text(`No.  ${facturaNum}`, boxX + 6, by);
-    by += 6;
-    doc.text(`Fecha:  ${fecha.toLocaleDateString('es-ES')}`, boxX + 6, by);
-    by += 6;
-    doc.text(`Hora:  ${fecha.toLocaleTimeString('es-ES')}`, boxX + 6, by);
-
+      by += 7;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(...darkText);
+      doc.text(`No.  ${facturaNum}`, boxX + 6, by);
+      by += 6;
+      doc.text(`Fecha:  ${fecha.toLocaleDateString('es-ES')}`, boxX + 6, by);
+      by += 6;
+      doc.text(`Hora:  ${fecha.toLocaleTimeString('es-ES')}`, boxX + 6, by);
 
       // Horizontal separator line
       return headerY + 42;
@@ -585,12 +490,11 @@ function exportToPDF() {
       doc.line(margin, footerY, rightX, footerY);
 
       doc.setFont('helvetica', 'italic');
-      doc.setFontSize(10);
+      doc.setFontSize(8);
       doc.setTextColor(...mediumGray);
       doc.text('Gracias por su compra. Vuelva pronto.', margin, footerY + 5);
-      doc.text('Este documento es un comprobante de pago válido.', margin, footerY + 11);
+      doc.text('Este documento es un comprobante de pago válido.', margin, footerY + 10);
       doc.text(`Página ${currentPage}`, rightX, footerY + 5, { align: 'right' });
-
     }
 
     let y = drawHeader();
@@ -604,7 +508,7 @@ function exportToPDF() {
     // CLIENTE section
     y += 12;
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(12);
+    doc.setFontSize(10);
     doc.setTextColor(...primaryColor);
     doc.text('DATOS DEL CLIENTE', margin, y);
 
@@ -615,16 +519,15 @@ function exportToPDF() {
 
     y += 8;
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(11);
+    doc.setFontSize(9);
     doc.setTextColor(...darkText);
     doc.text('Nombre:     Consumidor Final', margin, y);
-    y += 7;
+    y += 6;
     doc.text('Identificación:     222222222222', margin, y);
-    y += 7;
+    y += 6;
     doc.text('Dirección:     Ciudad', margin, y);
-    y += 7;
+    y += 6;
     doc.text('Teléfono:     N/A', margin, y);
-
 
     // Separator before table
     y += 10;
@@ -657,21 +560,19 @@ function exportToPDF() {
     doc.line(col4X, y - 5, col4X, y + 3);
 
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10);
+    doc.setFontSize(8);
     doc.setTextColor(...darkText);
     doc.text('DESCRIPCIÓN', col1X + 3, y + 1);
     doc.text('CANT.', col2X + colCantW / 2, y + 1, { align: 'center' });
     doc.text('P. UNIT.', col3X + colUnitW / 2, y + 1, { align: 'center' });
     doc.text('SUBTOTAL', col4X + colSubW / 2, y + 1, { align: 'center' });
 
-    y += 9;
+    y += 8;
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(11);
-
+    doc.setFontSize(9);
 
     carrito.value.forEach((item, index) => {
-      const rowH = 9;
-
+      const rowH = 8;
 
       // Page break check
       if (y + rowH > pageHeight - margin - 50) {
@@ -699,23 +600,8 @@ function exportToPDF() {
       doc.setTextColor(...darkText);
       doc.text(nombre, col1X + 3, y + 1);
       doc.text(item.cantidad.toString(), col2X + colCantW / 2, y + 1, { align: 'center' });
-      doc.text(new Intl.NumberFormat('es-CO', {
-        style: 'currency',
-        currency: 'COP',
-        currencyDisplay: 'symbol',
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-        useGrouping: true,
-      }).format(item.precio), col3X + colUnitW / 2, y + 1, { align: 'center' });
-      doc.text(new Intl.NumberFormat('es-CO', {
-        style: 'currency',
-        currency: 'COP',
-        currencyDisplay: 'symbol',
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-        useGrouping: true,
-      }).format(subtotal), col4X + colSubW / 2, y + 1, { align: 'center' });
-
+      doc.text(`$ ${item.precio.toFixed(2)}`, col3X + colUnitW / 2, y + 1, { align: 'center' });
+      doc.text(`$ ${subtotal.toFixed(2)}`, col4X + colSubW / 2, y + 1, { align: 'center' });
 
       // Row bottom border
       doc.setDrawColor(...borderGray);
@@ -743,33 +629,16 @@ function exportToPDF() {
 
     // Subtotal
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(11);
+    doc.setFontSize(9);
     doc.setTextColor(...darkText);
     doc.text('Subtotal:', totX + 5, y);
-    doc.text(new Intl.NumberFormat('es-CO', {
-      style: 'currency',
-      currency: 'COP',
-      currencyDisplay: 'symbol',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-      useGrouping: true,
-    }).format(totalValue), rightX - 5, y, { align: 'right' });
-
-
+    doc.text(`$ ${totalValue.toFixed(2)}`, rightX - 5, y, { align: 'right' });
 
 
     y += 7;
     // Impuestos
     doc.text('Impuestos (0%):', totX + 5, y);
-    doc.text(new Intl.NumberFormat('es-CO', {
-      style: 'currency',
-      currency: 'COP',
-      currencyDisplay: 'symbol',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-      useGrouping: true,
-    }).format(0), rightX - 5, y, { align: 'right' });
-
+    doc.text('$ 0.00', rightX - 5, y, { align: 'right' });
 
     y += 5;
     // Line before total
@@ -786,36 +655,26 @@ function exportToPDF() {
     doc.rect(totX - 2, y - 5, totW + 2, 10);
 
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(12);
+    doc.setFontSize(10);
     doc.setTextColor(...primaryColor);
     doc.text('TOTAL A PAGAR', totX + 5, y + 1);
-    doc.text(new Intl.NumberFormat('es-CO', {
-      style: 'currency',
-      currency: 'COP',
-      currencyDisplay: 'symbol',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-      useGrouping: true,
-    }).format(totalValue), rightX - 5, y + 1, { align: 'right' });
-
+    doc.text(`$ ${totalValue.toFixed(2)}`, rightX - 5, y + 1, { align: 'right' });
 
 
     // Amount in words (conventional)
     y += 14;
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
+    doc.setFontSize(8);
     doc.setTextColor(...mediumGray);
     doc.text(`Valor en letras:  ${numeroALetras(totalValue)} PESOS M/C.`, margin, y);
 
 
     // Observation section
-
     y += 10;
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(11);
+    doc.setFontSize(9);
     doc.setTextColor(...primaryColor);
     doc.text('OBSERVACIONES', margin, y);
-
     y += 4;
     doc.setDrawColor(...borderGray);
     doc.setLineWidth(0.3);
@@ -823,10 +682,9 @@ function exportToPDF() {
 
     y += 6;
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
+    doc.setFontSize(8);
     doc.setTextColor(...mediumGray);
     doc.text('Pago realizado en efectivo. No se aceptan devoluciones.', margin, y);
-
 
     // Authorized signature area
     y += 20;
@@ -842,27 +700,9 @@ function exportToPDF() {
     // Footer
     drawFooter();
 
-    const pdfBlob = doc.output('blob');
-    const pdfUrl = URL.createObjectURL(pdfBlob);
-    const nuevaVentana = window.open('', '_blank');
-    if (nuevaVentana) {
-      nuevaVentana.document.write(`
-        <html>
-          <head><title>Factura</title></head>
-          <body style="margin:0;height:100vh;">
-            <iframe src="${pdfUrl}" width="100%" height="100%" style="border:none;"></iframe>
-          </body>
-        </html>
-      `);
-      nuevaVentana.document.close();
-    } else {
-      window.location.href = pdfUrl;
-    }
-
-    setTimeout(() => URL.revokeObjectURL(pdfUrl), 10000);
+    doc.output('dataurlnewwindow');
     finalizarPDF();
   }
-
 
   function numeroALetras(numero) {
     const unidades = ['', 'UNO', 'DOS', 'TRES', 'CUATRO', 'CINCO', 'SEIS', 'SIETE', 'OCHO', 'NUEVE'];
@@ -919,23 +759,9 @@ function exportToPDF() {
   }
 
   body, html {
-    min-height: 100vh;
-    background-image: url('https://images.unsplash.com/photo-1495521821757-a1efb6729352?w=1200&q=80');
+    background: url('./img/background.jpg') no-repeat center center fixed;
     background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-    background-color: rgba(0, 0, 0, 0.35);
-    background-blend-mode: overlay;
-  }
-
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.35);
-    pointer-events: none;
-    z-index: -1;
+    min-height: 100vh;
   }
 
   header {
@@ -948,36 +774,12 @@ function exportToPDF() {
     border-bottom: 3px solid #ffd700;
     flex-wrap: wrap;
     gap: 12px;
-    position: sticky;
-    top: 0;
-    z-index: 800;
   }
 
   header img {
     height: 98px;
     width: auto;
     max-width: 100%;
-  }
-
-  .header-search {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-    padding: 0 20px;
-  }
-
-  .search-input {
-    width: min(420px, 100%);
-    padding: 10px 14px;
-    border-radius: 10px;
-    border: 1px solid #333;
-    outline: none;
-    font-size: 1em;
-  }
-
-  .search-input:focus {
-    border-color: #ffd700;
-    box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.25);
   }
 
   .header-search {
@@ -1014,17 +816,13 @@ function exportToPDF() {
 .products {
   border: 1px solid #ddd;
   border-radius: 8px;
-  padding: 16px;
+  padding: 15px;
   text-align: center;
   background-color: #f9f9f9;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   cursor: pointer;
-  flex: 1 1 260px;
-  min-width: 260px;
-  max-width: 320px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  width: 250px;
+  flex-shrink: 0;
 }
 
 .products:hover {
@@ -1251,17 +1049,13 @@ header button:hover {
   }
 
 
-.unit-price {
+  .unit-price {
     font-weight: 800;
     color: #0b3d2e;
     display: block;
     width: 100%;
     text-align: right;
     padding-right: 4px;
-
-    /* Ajuste visual: mover un poquito hacia la izquierda y mantener el valor bajo el header */
-    position: relative;
-    left: -24px;
   }
 
 
@@ -1381,9 +1175,6 @@ header button:hover {
   padding: 16px 20px;
   background: rgba(0, 0, 0, 0.55);
   border-bottom: 1px solid rgba(255, 215, 0, 0.25);
-  position: sticky;
-  top: 0;
-  z-index: 750;
 }
 
 .chip {
@@ -1528,25 +1319,12 @@ header button:hover {
     margin: 0;
   }
   #menu {
-    padding: 18px 12px;
+    padding: 28px 12px;
     gap: 14px;
   }
 
   .products {
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-    padding: 16px;
-    max-width: 300px;
-  }
-
-  .products h1 {
-    font-size: 1.35em;
-  }
-
-  .products p,
-  .precio {
-    font-size: 1em;
+    width: min(250px, 100%);
   }
 
   /* Modal carrito: que no quede cortado en pantallas chicas */
@@ -1555,27 +1333,12 @@ header button:hover {
 
     min-width: 0;
     max-height: 85vh;
-    padding: 16px;
-    font-size: 1.05rem;
+    padding: 14px;
   }
+
 
   .ventana-modal h2 {
-    font-size: 1.6em;
-  }
-
-  .factura button {
-    font-size: 1.25em;
-    padding: 18px 16px;
-  }
-
-  .total {
     font-size: 1.4em;
-  }
-
-  .carrito-table-header .col-label,
-  .item-info span,
-  .qty-badge {
-    font-size: 1rem;
   }
 }
 </style>
